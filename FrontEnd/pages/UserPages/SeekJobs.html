@@ -1,0 +1,108 @@
+<h2>Search</h2>
+<div class="mb-3 row">
+  <div class="col-md-6">
+    <div class="d-flex">
+      <input
+        type="text"
+        id="globalSearch"
+        placeholder="Search across all fields..."
+        class="form-control me-2"
+      />
+      <button class="btn btn-sm btn-outline-primary">Search</button>
+    </div>
+  </div>
+</div>
+
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th onclick="sortTable('name')">Company Name</th>
+      <th onclick="sortTable('title')">Title</th>
+      <th onclick="sortTable('descrip')">Description</th>
+      <th onclick="sortTable('salary')">Salary</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="jobs"></tbody>
+</table>
+
+<script>
+  (function () {
+    setTimeout(() => {
+      let jobs = [];
+      let companies = [];
+      const currentUserId = getUserId(); 
+
+      function fetchData() {
+        Promise.all([
+          fetch('http://localhost:3000/Jobs').then(res => res.json()),
+          fetch('http://localhost:3000/Companies').then(res => res.json())
+        ])
+        .then(([jobsData, companiesData]) => {
+          jobs = jobsData;
+          companies = companiesData;
+          renderJobs();
+        });
+      }
+
+      function renderJobs() {
+        const tbody = document.getElementById("jobs");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        jobs.forEach(job => {
+          const company = companies.find(c => c.id == job.CompanyID);
+          const companyName = company ? company.name : 'N/A';
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${companyName}</td>
+            <td>${job.Title}</td>
+            <td>${job.Description}</td>
+            <td>${job.Salary}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary apply-btn" data-jobid="${job.id}">
+                Apply
+              </button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        document.querySelectorAll('.apply-btn').forEach(btn => {
+          btn.addEventListener('click', handleApply);
+        });
+      }
+
+      function handleApply(event) {
+        const jobId = event.target.getAttribute('data-jobid');
+        
+        const application = {
+          userId: currentUserId,
+          jobId: jobId,
+          status: "pending",
+          appliedDate: new Date().toISOString()
+        };
+
+        fetch('http://localhost:3000/Applications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(application)
+        })
+        .then(response => {
+          if (response.ok) {
+            alert('Application submitted successfully!');
+            // Optional: disable the apply button
+            event.target.disabled = true;
+            event.target.textContent = 'Applied';
+          }
+        })
+        
+      }
+
+      fetchData();
+    }, 0);
+  })();
+</script>

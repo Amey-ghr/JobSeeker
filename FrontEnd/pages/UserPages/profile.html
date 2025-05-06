@@ -1,0 +1,49 @@
+<div class="form-container mt-5">
+    <div class="form-header text-center">
+        <h2 class="text-success">Update Profile</h2>
+        <p class="text-muted">Keep your profile up to date</p>
+    </div>
+
+    <form id="updateProfileForm">
+        <!-- Personal Information -->
+        <div class="form-section">
+            <h3 class="section-title">Personal Information</h3>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="updateFirstName" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="updateFirstName" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="updateLastName" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="updateLastName" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="updateEmail" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="updateEmail" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="updatePhone" class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="updatePhone" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- LinkedIn -->
+        <div class="form-section">
+            <h3 class="section-title">Profile Info</h3>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label for="updateLinkedIn" class="form-label">LinkedIn Profile URL</label>
+                    <input type="url" class="form-control" id="updateLinkedIn" required>
+                    <div class="form-text">Please provide your LinkedIn profile or company page URL</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Button -->
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <button type="submit" class="btn btn-success btn-register">Update Profile</button>
+        </div>
+    </form>
+</div>
+

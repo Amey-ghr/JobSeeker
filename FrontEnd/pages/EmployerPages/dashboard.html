@@ -1,0 +1,147 @@
+<!-- Dashboard Metrics -->
+<div class="container mt-4">
+  <h2 class="mb-4">Employer Dashboard</h2>
+  <div class="row g-4 mb-4">
+    <!-- Metrics Cards -->
+    <div class="col-md-3">
+      <div class="card text-white bg-primary">
+        <div class="card-body">
+          <h5 class="card-title">Posted Jobs</h5>
+          <p class="card-text fs-3" id="postedJobsCount">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card text-white bg-success">
+        <div class="card-body">
+          <h5 class="card-title">Applications Received</h5>
+          <p class="card-text fs-3" id="applicationsCount">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card text-white bg-warning">
+        <div class="card-body">
+          <h5 class="card-title">Scheduled Interviews</h5>
+          <p class="card-text fs-3" id="interviewsCount">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card text-white bg-danger">
+        <div class="card-body">
+          <h5 class="card-title">Shortlisted Candidates</h5>
+          <p class="card-text fs-3" id="shortlistedCount">0</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Applications Status</h5>
+          <canvas id="statusPieChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Jobs by Application Volume</h5>
+          <canvas id="jobsBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  (function() {
+    const jobsUrl        = "http://localhost:3000/Jobs";
+    const applicationsUrl= "http://localhost:3000/Applications";
+    const companiesUrl   = "http://localhost:3000/Companies";
+    const currentEmployerId = getUserId();
+
+    function fetchDashboardData() {
+      Promise.all([
+        fetch(jobsUrl).then(res => res.json()),
+        fetch(applicationsUrl).then(res => res.json()),
+        fetch(companiesUrl).then(res => res.json())  // ← was applicationsUrl twice
+      ])
+      .then(([jobs, applications, companies]) => {
+        const company = companies.find(c => c.userID === currentEmployerId);
+        if (!company) return console.warn("No company for user", currentEmployerId);
+
+        // jobs and applications for this employer
+        const companyJobs = jobs.filter(job => job.CompanyID === company.id);
+        const jobIds      = new Set(companyJobs.map(j => j.id));
+        const companyApps = applications.filter(app => jobIds.has(app.jobId));
+
+        updateMetrics(companyJobs, companyApps);
+        renderCharts(companyJobs, companyApps);
+      })
+      .catch(err => console.error("Error fetching dashboard data:", err));
+    }
+
+    function updateMetrics(jobs, apps) {
+      document.getElementById('postedJobsCount').textContent    = jobs.length;
+      document.getElementById('applicationsCount').textContent  = apps.length;
+
+      // e.g. interviews = pending + reviewed
+      const interviews = apps.filter(a => a.status === 'pending' || a.status === 'reviewed').length;
+      document.getElementById('interviewsCount').textContent = interviews;
+
+      // approved → shortlisted
+      const shortlisted = apps.filter(a => a.status === 'approved').length;
+      document.getElementById('shortlistedCount').textContent = shortlisted;
+    }
+
+    function renderCharts(jobs, apps) {
+      // Pie: status distribution
+      const statusCounts = {
+        pending:   apps.filter(a => a.status === 'pending').length,
+        reviewed:  apps.filter(a => a.status === 'reviewed').length,
+        approved:  apps.filter(a => a.status === 'approved').length,
+        rejected:  apps.filter(a => a.status === 'rejected').length,
+      };
+
+      new Chart(document.getElementById('statusPieChart'), {
+        type: 'pie',
+        data: {
+          labels:   Object.keys(statusCounts),
+          datasets: [{data: Object.values(statusCounts)}]
+        }
+      });
+
+      // Bar: top 5 jobs by number of applications
+      const counts = jobs.map(job => ({
+        title: job.Title,
+        count: apps.filter(a => a.jobId === job.id).length
+      }))
+      .sort((a,b) => b.count - a.count)
+      .slice(0,5);
+
+      new Chart(document.getElementById('jobsBarChart'), {
+        type: 'bar',
+        data: {
+          labels:   counts.map(c => c.title),
+          datasets: [{label:'Apps', data:counts.map(c => c.count)}]
+        },
+        options: {
+          scales:{ y:{ beginAtZero:true } }
+        }
+      });
+    }
+
+    fetchDashboardData();
+  })();
+</script>

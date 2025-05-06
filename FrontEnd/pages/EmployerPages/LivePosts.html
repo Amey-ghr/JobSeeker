@@ -1,0 +1,191 @@
+<body class="container my-5">
+  <h2 class="mb-4">Job Management</h2>
+
+  <form id="jobForm" class="mb-4">
+    <div class="mb-3">
+      <label for="jobTitle" class="form-label">Job Title</label>
+      <input type="text" class="form-control" id="jobTitle" required />
+      <div class="invalid-feedback">At least 3 characters required.</div>
+    </div>
+    <div class="mb-3">
+      <label for="jobDescription" class="form-label">Description</label>
+      <textarea
+        class="form-control"
+        id="jobDescription"
+        rows="3"
+        required
+      ></textarea>
+    </div>
+    <div class="mb-3">
+      <label for="jobSalary" class="form-label">Salary</label>
+      <input type="number" class="form-control" id="jobSalary" required />
+    </div>
+    <button type="submit" class="btn btn-primary" id="submitBtn">
+      Add Job
+    </button>
+  </form>
+
+  <input
+    type="text"
+    id="searchInput"
+    class="form-control mb-3"
+    placeholder="Search by Title..."
+  />
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Title <i class="bi bi-arrow-down-up"></i></th>
+        <th>Description</th>
+        <th>Salary</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="jobTableBody"></tbody>
+  </table>
+  <script>
+    console.log("Script loaded");
+
+    (function () {
+      setTimeout(() => {
+        const jobUrl = "http://localhost:3000/Jobs";
+        const companyUrl = "http://localhost:3000/Companies";
+        let allJobs = [];
+        let sortDirection = 1;
+        let editId = null;
+        let user = getUserId(); 
+        let userCompany = null;
+
+        // DOM elements
+        const jobTitle = document.getElementById("jobTitle");
+        const jobDescription = document.getElementById("jobDescription");
+        const jobSalary = document.getElementById("jobSalary");
+        const form = document.getElementById("jobForm");
+        const searchInput = document.getElementById("searchInput");
+
+        // fetch the company 
+        fetch(companyUrl)
+          .then((res) => res.json())
+          .then((companies) => {
+            console.log("All companies:", companies); // log
+            userCompany = companies.find((c) => c.userID == user);
+
+            if (!userCompany) {
+              console.error("No company found for user:", user);
+              return;
+            }
+
+            //jobs
+            fetch(jobUrl)
+              .then((res) => res.json())
+              .then((jobs) => {
+                
+                allJobs = jobs.filter((job) => job.CompanyID == userCompany.id);
+
+                if (allJobs.length === 0) {
+                  console.warn("No jobs found for company:", userCompany.id);
+                }
+
+                renderJobs(allJobs);
+              })
+              .catch((err) => console.error("Job fetch failed:", err));
+          })
+          .catch((err) => console.error("Company fetch failed:", err));
+
+        function renderJobs(jobs) {
+          const tbody = document.getElementById("jobTableBody");
+          tbody.innerHTML = jobs
+            .map(
+              (job) => `
+              <tr>
+                <td>${job.Title}</td>
+                <td>${job.Description}</td>
+                <td>$${job.Salary}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-1 edit-btn" data-id="${job.id}">
+                    <i class="bi bi-pencil-square"> edit </i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${job.id}">
+                    <i class="bi bi-trash">delete</i>
+                  </button>
+                </td>
+              </tr>
+            `
+            )
+            .join("");
+
+          // Add event listeners
+          document.querySelectorAll(".edit-btn").forEach((btn) => {
+            btn.addEventListener("click", () => loadJobForEdit(btn.dataset.id));
+          });
+          document.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", () => deleteJob(btn.dataset.id));
+          });
+        }
+
+        function deleteJob(id) {
+          if (confirm("Delete this job?")) {
+            fetch(`${jobUrl}/${id}`, { method: "DELETE" }).then(() =>
+              fetchAndRenderJobs()
+            );
+          }
+        }
+
+        function loadJobForEdit(id) {
+          fetch(`${jobUrl}/${id}`)
+            .then((res) => res.json())
+            .then((job) => {
+              jobTitle.value = job.Title;
+              jobDescription.value = job.Description;
+              jobSalary.value = job.Salary;
+              editId = id;
+              document.getElementById("submitBtn").textContent = "Update Job";
+            });
+        }
+
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const job = {
+            Title: jobTitle.value.trim(),
+            Description: jobDescription.value.trim(),
+            Salary: parseInt(jobSalary.value.trim(), 10),
+            CompanyID: userCompany.id,
+          };
+
+          fetch(editId ? `${jobUrl}/${editId}` : jobUrl, {
+            method: editId ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(job),
+          }).then(() => {
+            fetchAndRenderJobs();
+            form.reset();
+            editId = null;
+            document.getElementById("submitBtn").textContent = "Add Job";
+          });
+        });
+
+        // Search functionality
+        searchInput.addEventListener("input", () => {
+          const searchTerm = searchInput.value.toLowerCase();
+          renderJobs(
+            allJobs.filter((job) =>
+              job.Title.toLowerCase().includes(searchTerm)
+            )
+          );
+        });
+
+        // Sort by title
+        document
+          .querySelector("th:first-child")
+          .addEventListener("click", () => {
+            sortDirection *= -1;
+            renderJobs(
+              [...allJobs].sort(
+                (a, b) => a.Title.localeCompare(b.Title) * sortDirection
+              )
+            );
+          });
+      }, 0);
+    })();
+  </script>
+</body>
