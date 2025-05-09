@@ -36,6 +36,16 @@ public class JobController {
 		return ResponseEntity.status(HttpStatus.OK).body(jobs);
 	}
 	
+    @GetMapping("/company/{companyId}")
+    public ResponseEntity<List<Job>> getJobsByCompany(@PathVariable Long companyId) {
+        List<Job> jobs=service.getAllJobsByCompany(companyId);
+        if (jobs != null) {
+			return ResponseEntity.status(HttpStatus.OK).body(jobs);
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+    }
+	
 	@GetMapping("/{id}")
 	public ResponseEntity<Job> getJob(@PathVariable Long id) {
 		Job job = service.getJobById(id);
@@ -49,7 +59,7 @@ public class JobController {
 	@PostMapping
 	public ResponseEntity<Job> createJob(@RequestBody Job job) {
 		Job saved = service.saveJob(job);
-		return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/api/Jobs/" + saved.getJobId()))
+		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(saved);
 	}
 

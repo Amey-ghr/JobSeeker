@@ -11,4 +11,5 @@ public interface JobService {
 	Job saveJob(Job job);
 	Job deleteJob(Long id);
 	Job updateJob(Job job, Long id);
+	List<Job>getAllJobsByCompany(Long id);
 }
