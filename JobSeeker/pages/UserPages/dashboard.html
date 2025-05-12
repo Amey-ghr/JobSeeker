@@ -1,0 +1,143 @@
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Job Seeker Dashboard -->
+<div class="container mt-4">
+  <h2 class="mb-4">Job Seeker Dashboard</h2>
+
+  <!-- Top Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-white bg-primary">
+        <div class="card-body">
+          <h5 class="card-title">Jobs Available</h5>
+          <p class="card-text fs-4" id="jobsAvailable">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-success">
+        <div class="card-body">
+          <h5 class="card-title">Applications Submitted</h5>
+          <p class="card-text fs-4" id="applicationsSubmitted">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-warning">
+        <div class="card-body">
+          <h5 class="card-title">Applications Approved</h5>
+          <p class="card-text fs-4" id="aplicationsApproved">0</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-danger">
+        <div class="card-body">
+          <h5 class="card-title">Applications Pending</h5>
+          <p class="card-text fs-4" id="aplicationsPending">0</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4">
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">My Application Status</h5>
+          <canvas id="statusPieChart" height="300"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Applications by Industry</h5>
+          <canvas id="industryBarChart" height="300"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const baseUrl = "http://localhost:8080/api";
+    const jobsUrl = `${baseUrl}/jobs`;
+    const applicationsByUserUrl = `${baseUrl}/applications/user`;
+    const companiesUrl = `${baseUrl}/companies`;
+  
+    const currentUserId = getUserId();
+  
+    function fetchDashboardData() {
+      Promise.all([
+        fetch(jobsUrl).then(r => r.json()),
+        fetch(`${applicationsByUserUrl}/${currentUserId}`).then(r => r.json()),
+        fetch(companiesUrl).then(r => r.json())
+      ])
+      .then(([jobs, myApps, companies]) => {
+        // Set metric values
+        document.getElementById('jobsAvailable').textContent = jobs.length;
+        document.getElementById('applicationsSubmitted').textContent = myApps.length;
+        document.getElementById('aplicationsApproved').textContent = myApps.filter(a => a.status === 'approved').length;
+        document.getElementById('aplicationsPending').textContent = myApps.filter(a => a.status === 'pending').length;
+  
+        // Charts
+        renderCharts(myApps, jobs, companies);
+      })
+      .catch(err => console.error("Dashboard fetch error:", err));
+    }
+  
+    function renderCharts(apps, jobs, companies) {
+      const statusCounts = {
+        pending: apps.filter(a => a.status === 'pending').length,
+        approved: apps.filter(a => a.status === 'approved').length,
+        rejected: apps.filter(a => a.status === 'rejected').length
+      };
+  
+      if (window.statusPie) window.statusPie.destroy();
+      window.statusPie = new Chart(document.getElementById('statusPieChart'), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(statusCounts),
+          datasets: [{ data: Object.values(statusCounts) }]
+        }
+      });
+  
+      const companyMap = {};
+      companies.forEach(c => companyMap[c.id] = c.industry);
+  
+      const industryCounts = {};
+      apps.forEach(app => {
+        const job = jobs.find(j => j.id === app.jobId);
+        const industry = job ? companyMap[job.companyId] || 'Other' : 'Unknown';
+        industryCounts[industry] = (industryCounts[industry] || 0) + 1;
+      });
+  
+      if (window.industryBar) window.industryBar.destroy();
+      window.industryBar = new Chart(document.getElementById('industryBarChart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(industryCounts),
+          datasets: [{
+            label: 'Applications',
+            data: Object.values(industryCounts),
+            backgroundColor: 'rgba(54, 162, 235, 0.5)'
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+    }
+  
+    fetchDashboardData();
+  })();
+  </script>
+  

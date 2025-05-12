@@ -1,0 +1,152 @@
+<body class="container my-5">
+  <h2 class="mb-4">Job Management</h2>
+
+  <form id="jobForm" class="mb-4">
+    <div class="mb-3">
+      <label for="jobTitle" class="form-label">Job Title</label>
+      <input type="text" class="form-control" id="jobTitle" required />
+      <div class="invalid-feedback">At least 3 characters required.</div>
+    </div>
+    <div class="mb-3">
+      <label for="jobDescription" class="form-label">Description</label>
+      <textarea
+        class="form-control"
+        id="jobDescription"
+        rows="3"
+        required
+      ></textarea>
+    </div>
+    <div class="mb-3">
+      <label for="jobSalary" class="form-label">Salary</label>
+      <input type="number" class="form-control" id="jobSalary" required />
+    </div>
+    <button type="submit" class="btn btn-primary" id="submitBtn">
+      Add Job
+    </button>
+  </form>
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Salary</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="jobTableBody"></tbody>
+  </table>
+
+  <script>
+    (function () {
+      setTimeout(() => {
+        const jobUrl = "http://localhost:8080/api/jobs";
+        const companyUrl = "http://localhost:8080/api/companies";
+        let allJobs = [];
+        let editId = null;
+        let user = getUserId();
+        let userCompany = null;
+
+        const jobTitle = document.getElementById("jobTitle");
+        const jobDescription = document.getElementById("jobDescription");
+        const jobSalary = document.getElementById("jobSalary");
+        const form = document.getElementById("jobForm");
+
+        // Fetch company by user ID
+        fetch(`${companyUrl}/user/${user}`)
+          .then((res) => {
+            if (!res.ok) throw new Error("Company not found for user.");
+            return res.json();
+          })
+          .then((company) => {
+            userCompany = company;
+            fetchAndRenderJobs();
+          })
+          .catch((err) => {
+            console.error("Company fetch failed:", err);
+          });
+
+        function fetchAndRenderJobs() {
+          fetch(`${jobUrl}/company/${userCompany.companyId}`)
+            .then((res) => res.json())
+            .then((jobs) => {
+              allJobs = jobs;
+              renderJobs(allJobs);
+            })
+            .catch((err) => console.error("Failed to fetch jobs:", err));
+        }
+
+        function renderJobs(jobs) {
+          const tbody = document.getElementById("jobTableBody");
+          tbody.innerHTML = jobs
+            .map(
+              (job) => `
+              <tr>
+                <td>${job.title}</td>
+                <td>${job.description}</td>
+                <td>$${job.salary}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary me-1 edit-btn" data-id="${job.jobId}">
+                    <i class="bi bi-pencil-square"> edit </i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${job.jobId}">
+                    <i class="bi bi-trash"> delete </i>
+                  </button>
+                </td>
+              </tr>
+            `
+            )
+            .join("");
+
+          document.querySelectorAll(".edit-btn").forEach((btn) => {
+            btn.addEventListener("click", () => loadJobForEdit(btn.dataset.id));
+          });
+          document.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", () => deleteJob(btn.dataset.id));
+          });
+        }
+
+        function deleteJob(id) {
+          if (confirm("Delete this job?")) {
+            fetch(`${jobUrl}/${id}`, { method: "DELETE" }).then(() => {
+              fetchAndRenderJobs();
+            });
+          }
+        }
+
+        function loadJobForEdit(id) {
+          fetch(`${jobUrl}/${id}`)
+            .then((res) => res.json())
+            .then((job) => {
+              jobTitle.value = job.title;
+              jobDescription.value = job.description;
+              jobSalary.value = job.salary;
+              editId = job.jobId;
+              document.getElementById("submitBtn").textContent = "Update Job";
+            });
+        }
+
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const job = {
+            title: jobTitle.value.trim(),
+            description: jobDescription.value.trim(),
+            salary: parseInt(jobSalary.value.trim(), 10),
+            company: userCompany,
+          };
+
+          fetch(editId ? `${jobUrl}/${editId}` : jobUrl, {
+            method: editId ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(job),
+          }).then(() => {
+            fetchAndRenderJobs();
+            form.reset();
+            editId = null;
+            document.getElementById("submitBtn").textContent = "Add Job";
+          });
+        });
+      }, 0);
+    })();
+  </script>
+</body>

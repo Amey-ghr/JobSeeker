@@ -1,0 +1,110 @@
+<h2>Search</h2>
+<div class="mb-3 row">
+  <div class="col-md-6">
+    <div class="d-flex">
+      <input
+        type="text"
+        id="globalSearch"
+        placeholder="Search across all fields..."
+        class="form-control me-2"
+      />
+      <button class="btn btn-sm btn-outline-primary">Search</button>
+    </div>
+  </div>
+</div>
+
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th onclick="sortTable('name')">Company Name</th>
+      <th onclick="sortTable('title')">Title</th>
+      <th onclick="sortTable('descrip')">Description</th>
+      <th onclick="sortTable('salary')">Salary</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="jobs"></tbody>
+</table>
+<script>
+  (function () {
+    setTimeout(() => {
+      let jobs = [];
+      let appliedJobIds = new Set(); // Keep track of applied jobs
+      const currentUserId = getUserId();
+
+      function fetchData() {
+        Promise.all([
+          fetch("http://localhost:8080/api/jobs").then(res => res.json()),
+          fetch(`http://localhost:8080/api/applications/user/${currentUserId}`).then(res => res.json())
+        ])
+        .then(([jobsData, applications]) => {
+          jobs = jobsData;
+          appliedJobIds = new Set(applications.map(app => app.job.jobId));
+          renderJobs();
+        })
+        .catch(err => console.error("Error fetching jobs or applications:", err));
+      }
+
+      function renderJobs() {
+        const tbody = document.getElementById("jobs");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        jobs.forEach((job) => {
+          const alreadyApplied = appliedJobIds.has(job.jobId);
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+            <td>${job.company.name}</td>
+            <td>${job.title}</td>
+            <td>${job.description}</td>
+            <td>${job.salary}</td>
+            <td>
+              <button class="btn btn-sm ${alreadyApplied ? 'btn-secondary' : 'btn-outline-primary'} apply-btn"
+                      data-jobid="${job.jobId}" ${alreadyApplied ? "disabled" : ""}>
+                ${alreadyApplied ? "Applied" : "Apply"}
+              </button>
+            </td>
+          `;
+
+          tbody.appendChild(row);
+        });
+
+        document.querySelectorAll(".apply-btn:not(:disabled)").forEach((btn) => {
+          btn.addEventListener("click", handleApply);
+        });
+      }
+
+      function handleApply(event) {
+        const jobId = event.target.getAttribute("data-jobid");
+
+        const application = {
+          user: { userId: currentUserId },
+          job: { jobId: parseInt(jobId) },
+          status: "pending",
+          applyDate: new Date().toISOString().split("T")[0]
+        };
+
+        fetch("http://localhost:8080/api/applications", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(application),
+        }).then((response) => {
+          if (response.ok) {
+            alert("Application submitted successfully!");
+            event.target.disabled = true;
+            event.target.classList.remove("btn-outline-primary");
+            event.target.classList.add("btn-secondary");
+            event.target.textContent = "Applied";
+          } else {
+            response.text().then(msg => alert("Failed to apply: " + msg));
+          }
+        });
+      }
+
+      fetchData();
+    }, 0);
+  })();
+</script>

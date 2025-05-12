@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employer Dashboard</title>
+  <link href="css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+  <a class="navbar-brand text-white" href="#">JobSeeker</a>
+
+  <!-- Navbar Content -->
+  <div class="collapse navbar-collapse" id="navbarContent">
+    <ul class="navbar-nav ms-auto align-items-center">
+
+      <!-- Notification -->
+      <li class="nav-item mx-2">
+        <a class="nav-link text-white" href="#">
+          <i class="fa fa-bell"></i>
+        </a>
+      </li>
+
+      <!-- Settings -->
+      <li class="nav-item mx-2">
+        <a class="nav-link text-white" href="#">
+          <i class="fa fa-cog"></i>
+        </a>
+      </li>
+
+      <!-- Admin Dropdown -->
+      <li class="nav-item dropdown mx-2">
+        <a class="nav-link dropdown-toggle text-white" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+          <i class="fa fa-user"></i> Admin
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#">Profile</a></li>
+          <li><a class="dropdown-item" href="#">Logout</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="d-flex">
+  <!-- Sidebar -->
+  <div class="bg-dark text-white sidebar p-3" style="width: 240px; min-height: 100vh;">
+    <h5 class="text-white mb-3">Menu</h5>
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a href="#" class="nav-link text-white" onclick="loadPage('EmployerPages/dashboard.html')">
+          <i class="fa fa-chart-line me-2"></i> Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white dropdown-toggle" data-bs-toggle="collapse" href="#menu1">
+          <i class="fa-solid fa-magnifying-glass-dollar"></i> Job posts
+        </a>
+        <div class="collapse" id="menu1">
+          <ul class="nav flex-column ms-3">
+            <li><a href="#" class="nav-link text-white" onclick="loadPage('EmployerPages/LivePosts.html')">Manage posts</a></li>
+            <li><a href="#" class="nav-link text-white" onclick="loadPage('EmployerPages/Applications.html')">Applications</a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white dropdown-toggle" data-bs-toggle="collapse" href="#menu2">
+          <i class="fa fa-graduation-cap me-2"></i> Candidate manager
+        </a>
+        <div class="collapse" id="menu2">
+          <ul class="nav flex-column ms-3">
+            <li><a href="#" class="nav-link text-white" onclick="loadPage('EmployerPages/Interviews.html')">Schedule interviews</a></li>
+            <li><a href="#" class="nav-link text-white" onclick="loadPage('EmployerPages/Offers.html')">Send offer letters</a></li>
+            <li><a href="#" class="nav-link text-white" onclick="loadPage('EmployerPages/OnBoard.html')">Prepare on-boarding</a></li>
+          </ul>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link text-white" onclick="loadPage('EmployerPages/FAQs.html')">
+          <i class="fa fa-question me-2"></i> FAQs
+        </a>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="p-4" style="flex: 1;" id="main-content">
+    <h2>Welcome, Employer!</h2>
+    <p>
+      We're thrilled to support your hiring journey. Whether you're looking to fill a critical role
+      or expand your team with top-tier talent, our platform provides the tools you need to find
+      the best candidates efficiently.
+      <br>
+      <strong>Let's find the perfect match for your company!</strong>
+    </p>
+</div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-dark text-white text-center py-3">
+  &copy; Amey Gharge 2025 Admin Dashboard. All rights reserved.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/getters.js"></script>
+<script src="js/script.js"></script>
+
+</body>
+</html>

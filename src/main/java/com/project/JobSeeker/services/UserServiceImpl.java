@@ -74,25 +74,18 @@ public class UserServiceImpl implements UserService {
 	        user.setEmail(req.getEmail());
 	        user.setPassword(req.getPassword());
 	        user.setPhone(req.getPhone());
-	        user.setResume(req.getResume()); // maps to resume
+	        user.setResume(req.getResume()); 
 	        user.setUserType(req.getUserType());
 
 	        User savedUser = repository.save(user);
 
-	        // Only save company if Employer
 	        if ("Employer".equalsIgnoreCase(req.getUserType())) {
 	            CompanyDTO dto = req.getCompany();
-	            System.out.println("Saving company:");
-	            System.out.println("  Name: " + dto.getName());
-	            System.out.println("  Location: " + dto.getLocation());
-	            System.out.println("  Industry: " + dto.getIndustry());
-	            System.out.println("  User ID: " + savedUser.getUserId());
-
 	            Company company = new Company();
 	            company.setName(dto.getName());
 	            company.setLocation(dto.getLocation());
 	            company.setIndustry(dto.getIndustry());
-	            company.setUser(savedUser); // assuming a OneToOne or ManyToOne link
+	            company.setUser(savedUser); 
 	            companyRepository.save(company);
 	        }
 
@@ -112,6 +105,7 @@ public class UserServiceImpl implements UserService {
 		else
 			return null;
 	}
+	 
 	
 	@Override
 	public Boolean emailExists(String email) {

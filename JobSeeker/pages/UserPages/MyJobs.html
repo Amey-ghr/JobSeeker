@@ -1,0 +1,95 @@
+<div class="container my-5">
+  <h2 class="mb-4">Your Applied Jobs</h2>
+
+  <input
+    type="text"
+    id="searchAppliedJobInput"
+    class="form-control mb-3"
+    placeholder="Search by Job Title..."
+  />
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Job Title</th>
+        <th>Apply Date</th>
+        <th>Status</th>
+        <th>Company</th>
+      </tr>
+    </thead>
+    <tbody id="appliedJobsTableBody"></tbody>
+  </table>
+
+  <script>
+    (function () {
+      setTimeout(() => {
+        const baseUrl = "http://localhost:8080/api";
+        const applicationUrl = `${baseUrl}/applications/user`;
+        const deleteUrl = `${baseUrl}/applications`;
+
+        const currentUserId = getUserId();
+        const searchAppliedJobInput = document.getElementById(
+          "searchAppliedJobInput"
+        );
+        let allApplications = [];
+
+        function fetchAndRenderAppliedJobs() {
+          fetch(`${applicationUrl}/${currentUserId}`)
+            .then((res) => res.json())
+            .then((applicationsData) => {
+              allApplications = applicationsData;
+              renderAppliedJobs(applicationsData);
+            })
+            .catch((err) => console.error("Error fetching applications:", err));
+        }
+
+        function renderAppliedJobs(applications) {
+          const tbody = document.getElementById("appliedJobsTableBody");
+          if (!tbody) return;
+          tbody.innerHTML = "";
+
+          applications.forEach((application) => {
+            const job = application.job;
+            const statusBadge = getStatusBadge(application.status);
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${job.title}</td>
+              <td>${new Date(application.applyDate).toLocaleDateString()}</td>
+              <td>${statusBadge}</td>
+              <td>
+                ${job.company.name}
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+
+          document.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", () =>
+              deleteApplication(btn.dataset.id)
+            );
+          });
+        }
+
+        function getStatusBadge(status) {
+          const lower = status.toLowerCase();
+          let className = "secondary";
+          if (lower === "approved") className = "success";
+          else if (lower === "pending") className = "warning";
+          else if (lower === "rejected") className = "danger";
+          return `<span class="badge bg-${className}">${status}</span>`;
+        }
+
+        searchAppliedJobInput.addEventListener("input", () => {
+          const searchTerm = searchAppliedJobInput.value.toLowerCase();
+          const filtered = allApplications.filter((application) => {
+            return application.job?.title.toLowerCase().includes(searchTerm);
+          });
+          renderAppliedJobs(filtered);
+        });
+
+        fetchAndRenderAppliedJobs();
+      }, 0);
+    })();
+  </script>
+</div>

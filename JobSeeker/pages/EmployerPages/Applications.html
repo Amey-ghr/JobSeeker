@@ -1,0 +1,145 @@
+<div class="container my-5">
+  <h2 class="mb-4">Applications Management</h2>
+
+  <input
+    type="text"
+    id="searchApplicationInput"
+    class="form-control mb-3"
+    placeholder="Search by Job Title..."
+  />
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Job Title</th>
+        <th>Profile</th>
+        <th>Apply Date</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="applicationsTableBody"></tbody>
+  </table>
+
+  <script>
+    (function () {
+      const baseUrl = "http://localhost:8080/api";
+      const applicationUrl = `${baseUrl}/applications`;
+      const companyUrl = `${baseUrl}/companies`;
+
+      let allApplications = [];
+      let userCompany = null;
+
+      const currentEmployerId = getUserId();
+      const searchApplicationInput = document.getElementById(
+        "searchApplicationInput"
+      );
+
+      function fetchData() {
+        fetch(`${companyUrl}/user/${currentEmployerId}`)
+          .then((res) => res.json())
+          .then((company) => {
+            if (company && company.companyId) {
+              userCompany = company;
+              fetch(`${applicationUrl}/company/${userCompany.companyId}`)
+                .then((res) => res.json())
+                .then((applications) => {
+                  allApplications = applications;
+                  renderApplications(allApplications);
+                });
+            }
+          });
+      }
+
+      function renderApplications(applications) {
+        const tbody = document.getElementById("applicationsTableBody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        applications.forEach((application) => {
+          const user = application.user;
+          const job = application.job;
+
+          const resumeLink = user?.resume
+            ? `<a href="${user.resume}" target="_blank">View Resume</a>`
+            : "N/A";
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${job?.title || "N/A"}</td>
+            <td>${resumeLink}</td>
+            <td>${new Date(application.applyDate).toLocaleDateString()}</td>
+            <td><span class="badge ${
+              application.status === "approved"
+                ? "bg-success"
+                : application.status === "rejected"
+                ? "bg-danger"
+                : "bg-warning text-dark"
+            }">${application.status}</span></td>
+
+            <td>
+              ${
+                application.status === "pending"
+                  ? `
+                <button class="btn btn-sm btn-success me-1 approve-btn" data-id="${application.appId}">
+                  Approve
+                </button>
+                <button class="btn btn-sm btn-danger me-1 reject-btn" data-id="${application.appId}">
+                  Reject
+                </button>
+              `
+                  : ""
+              }
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        // Attach event listeners for approve/reject
+        document
+          .querySelectorAll(".approve-btn")
+          .forEach((btn) =>
+            btn.addEventListener("click", () =>
+              updateStatus(btn.dataset.id, "approved")
+            )
+          );
+
+        document
+          .querySelectorAll(".reject-btn")
+          .forEach((btn) =>
+            btn.addEventListener("click", () =>
+              updateStatus(btn.dataset.id, "rejected")
+            )
+          );
+      }
+
+      function updateStatus(id, newStatus) {
+        const application = allApplications.find((app) => app.appId == id);
+        if (!application) return;
+
+        fetch(`${applicationUrl}/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...application,
+            status: newStatus,
+          }),
+        })
+          .then(() => fetchData())
+          .catch((err) => console.error("Error updating status:", err));
+      }
+
+      searchApplicationInput.addEventListener("input", () => {
+        const searchTerm = searchApplicationInput.value.toLowerCase();
+        const filtered = allApplications.filter((application) =>
+          application.job?.title?.toLowerCase().includes(searchTerm)
+        );
+        renderApplications(filtered);
+      });
+
+      fetchData();
+    })();
+  </script>
+</div>
