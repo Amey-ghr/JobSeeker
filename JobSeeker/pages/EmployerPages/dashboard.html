@@ -136,7 +136,7 @@
       const counts = jobs
         .map((job) => ({
           title: job.title,
-          count: apps.filter((a) => a.jobId === job.id).length,
+          count: apps.filter((a) => a.jobId === job.jobId).length,
         }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
