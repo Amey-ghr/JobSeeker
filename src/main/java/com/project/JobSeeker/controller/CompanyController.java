@@ -45,6 +45,16 @@ public class CompanyController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 	}
+	
+	@GetMapping("/user/{id}")
+	public ResponseEntity<Company> getCompanyByUser(@PathVariable Long id) {
+		Company company = service.getCompanyByUserId(id);
+		if (company != null) {
+			return ResponseEntity.status(HttpStatus.OK).body(company);
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+	}
 
 	@PostMapping
 	public ResponseEntity<Company> createCompany(@RequestBody Company Company) {

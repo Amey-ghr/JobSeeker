@@ -58,4 +58,13 @@ public class ApplicationServiceImpl implements ApplicationService{
 		return null;
 	}
 
+	@Override
+	public List<Application> getAllApplicationByCompanyId(Long id) {
+		return repository.findByJobCompanyCompanyId(id);
+	}
+	
+	@Override
+	public List<Application> getApplicationsByUserId(Long id) {
+        return repository.findByUserUserId(id);
+    }
 }

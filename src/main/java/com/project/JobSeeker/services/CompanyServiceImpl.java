@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.project.JobSeeker.entities.Company;
+import com.project.JobSeeker.entities.User;
 import com.project.JobSeeker.repositories.CompanyRepo;
 
 @Service
@@ -56,6 +57,11 @@ public class CompanyServiceImpl implements CompanyService {
 			return repository.save(existing);
 		}
 		return null;
+	}
+	
+	@Override
+	public Company getCompanyByUserId(Long id) {
+		return repository.findByUserUserId(id);
 	}
 
 }

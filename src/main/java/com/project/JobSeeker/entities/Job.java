@@ -1,9 +1,13 @@
 package com.project.JobSeeker.entities;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -16,7 +20,9 @@ public class Job {
 	private Long jobId;
 	
 	@NotNull(message = "company id is mandatory")
-	private Long companyId;
+	@ManyToOne
+	@JoinColumn(name="company_id")
+	private Company company;
 	
 	@NotBlank(message = "Data mandatory")
 	private String title;
@@ -34,17 +40,19 @@ public class Job {
 		super();
 	}
 
-	public Job(Long jobId, @NotNull(message = "company id is mandatory") Long companyId,
+
+	public Job(Long jobId, @NotNull(message = "company id is mandatory") Company company,
 			@NotBlank(message = "Data mandatory") String title,
 			@NotBlank(message = "Data mandatory") String description,
 			@NotNull(message = "Data mandatory") @Positive Long salary) {
 		super();
 		this.jobId = jobId;
-		this.companyId = companyId;
+		this.company = company;
 		this.title = title;
 		this.description = description;
 		this.salary = salary;
 	}
+
 
 	public Long getJobId() {
 		return jobId;
@@ -54,12 +62,12 @@ public class Job {
 		this.jobId = jobId;
 	}
 
-	public Long getCompanyId() {
-		return companyId;
+	public Company getcompany() {
+		return company;
 	}
 
-	public void setCompanyId(Long companyId) {
-		this.companyId = companyId;
+	public void setcompany(Company company) {
+		this.company = company;
 	}
 
 	public String getTitle() {
@@ -88,7 +96,7 @@ public class Job {
 
 	@Override
 	public String toString() {
-		return "Job [jobId=" + jobId + ", companyId=" + companyId + ", title=" + title + ", description=" + description
+		return "Job [jobId=" + jobId + ", company=" + company + ", title=" + title + ", description=" + description
 				+ ", salary=" + salary + "]";
 	}
 

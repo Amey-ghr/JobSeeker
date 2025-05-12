@@ -6,4 +6,5 @@ import com.project.JobSeeker.entities.Company;
 
 public interface CompanyRepo extends JpaRepository<Company, Long>{
 
+	Company findByUserUserId(Long userId);
 }

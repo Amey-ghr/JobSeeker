@@ -2,6 +2,7 @@ package com.project.JobSeeker.controller;
 
 import java.net.URI;
 
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.project.JobSeeker.entities.Application;
+import com.project.JobSeeker.repositories.ApplicationRepo;
 import com.project.JobSeeker.services.ApplicationService;
 
 @RestController
@@ -24,10 +26,12 @@ import com.project.JobSeeker.services.ApplicationService;
 public class ApplicationsController {
 
 	private final ApplicationService service;
+	private final ApplicationRepo applicationRepo;
 	
 	@Autowired
-	public ApplicationsController(ApplicationService service) {
+	public ApplicationsController(ApplicationService service, ApplicationRepo applicationRepo) {
 		this.service = service;
+		this.applicationRepo=applicationRepo;
 	}
 	
 	@GetMapping
@@ -35,6 +39,12 @@ public class ApplicationsController {
 		List<Application> applications = service.getAllApplications();
 		return ResponseEntity.status(HttpStatus.OK).body(applications);
 	}
+	
+	 @GetMapping("/user/{userId}")
+	    public ResponseEntity<List<Application>> getApplicationsByUserId(@PathVariable Long userId) {
+	        List<Application> applications = service.getApplicationsByUserId(userId);
+	        return ResponseEntity.ok(applications);
+	    }
 	
 	@GetMapping("/{id}")
 	public ResponseEntity<Application> getApplication(@PathVariable Long id) {
@@ -45,11 +55,29 @@ public class ApplicationsController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 	}
+	
+	@GetMapping("/company/{id}")
+	public ResponseEntity<List<Application>> getApplicationByCompany(@PathVariable Long id) {
+		List<Application> application = service.getAllApplicationByCompanyId(id);
+		if (application != null) {
+			return ResponseEntity.status(HttpStatus.OK).body(application);
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+	}
 
 	@PostMapping
-	public ResponseEntity<Application> createApplication(@RequestBody Application Application) {
-		Application saved = service.saveApplication(Application);
-		return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/api/Applications/" + saved.getAppId()))
+	public ResponseEntity<Application> createApplication(@RequestBody Application application) {
+	    boolean alreadyApplied = applicationRepo.existsByUserUserIdAndJobJobId(application.getUserId(), application.getJobId());
+	    
+	    if (alreadyApplied) {
+	        return ResponseEntity
+	            .status(HttpStatus.CONFLICT)
+	            .build();
+	    }
+	    
+		Application saved = service.saveApplication(application);
+		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(saved);
 	}
 
