@@ -89,7 +89,6 @@
           document.getElementById("aplicationsPending").textContent =
             myApps.filter((a) => a.status === "pending").length;
 
-          
           renderCharts(myApps, jobs, companies);
         })
         .catch((err) => console.error("Dashboard fetch error:", err));
@@ -113,17 +112,19 @@
 
       const companyMap = {};
       companies.forEach((c) => {
-        companyMap[c.id] = c.industry;
+        companyMap[String(c.companyId)] = c.industry;
       });
-
 
       const jobsPerIndustry = {};
       jobs.forEach((job) => {
-        const industry = companyMap[job.companyId] || "Other";
+        const industry = companyMap[String(job.company.companyId)] || "Other";
         jobsPerIndustry[industry] = (jobsPerIndustry[industry] || 0) + 1;
       });
 
-      // Industry Bar Chart
+      console.log("Chart labels:", Object.keys(jobsPerIndustry));
+      console.log("Chart data:", Object.values(jobsPerIndustry));
+
+      // Bar chart
       if (window.industryBar) window.industryBar.destroy();
       window.industryBar = new Chart(
         document.getElementById("industryBarChart"),
